@@ -21,10 +21,10 @@ abstract class RequestBundle {
 }
 
 class RequestBundleWithBody extends RequestBundle {
-  final Map<String, dynamic> body;
+  final dynamic body;
   RequestBundleWithBody(String method, String url, Map<String, String> query,
       Map<String, String> headers,
-      {this.body = const <String, dynamic>{}})
+      {required this.body})
       : super(method, url, query, headers);
 
   @override

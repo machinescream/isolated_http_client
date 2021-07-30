@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:isolated_http_client/isolated_http_client.dart';
 import 'package:isolated_http_client/src/utils.dart';
 import 'package:worker_manager/worker_manager.dart';
-
 import 'exceptions.dart';
 import 'http_method.dart';
 import 'response.dart';
@@ -265,7 +264,7 @@ class IsolatedHttpClient implements HttpClient {
       final httpResponse = await request.send().timeout(timeout);
       final bodyString = await httpResponse.stream.bytesToString();
       final body = bodyString.isNotEmpty
-          ? jsonDecode(bodyString) as Map<String, dynamic>
+          ? jsonDecode(bodyString) as dynamic
           : <String, dynamic>{};
 
       final isolatedResponse =
