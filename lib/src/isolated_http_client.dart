@@ -10,8 +10,7 @@ import 'response.dart';
 import 'requests.dart';
 
 abstract class HttpClient {
-  factory HttpClient(
-          {Duration timeout = const Duration(seconds: 10), bool log = false}) =>
+  factory HttpClient({Duration timeout = const Duration(seconds: 10), bool log = false}) =>
       IsolatedHttpClient(timeout, log);
 
   Cancelable<Response> get({
@@ -35,7 +34,7 @@ abstract class HttpClient {
     String path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, Object>? body,
+    Map<String, dynamic>? body,
     bool fakeIsolate = false,
   });
 
@@ -44,7 +43,7 @@ abstract class HttpClient {
     String path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, Object>? body,
+    Map<String, dynamic>? body,
     bool fakeIsolate = false,
   });
 
@@ -53,7 +52,7 @@ abstract class HttpClient {
     String path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, Object>? body,
+    Map<String, dynamic>? body,
     bool fakeIsolate = false,
   });
 
@@ -62,7 +61,7 @@ abstract class HttpClient {
     String path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, Object>? body,
+    Map<String, dynamic>? body,
     bool fakeIsolate = false,
   });
 
@@ -78,8 +77,7 @@ class IsolatedHttpClient implements HttpClient {
 
   IsolatedHttpClient(this.timeout, this.log);
 
-  Response _checkedResponse(
-      Response response, RequestBundle requestBundle) {
+  Response _checkedResponse(Response response, RequestBundle requestBundle) {
     final statusCode = response.statusCode;
     if (statusCode >= 200 && statusCode < 300) return response;
     if (statusCode == 401) {
@@ -136,7 +134,7 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, Object>? body,
+    Map<String, dynamic>? body,
     bool fakeIsolate = false,
   }) {
     return _send(
@@ -156,7 +154,7 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, Object>? body,
+    Map<String, dynamic>? body,
     bool fakeIsolate = false,
   }) {
     return _send(
@@ -176,7 +174,7 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, Object>? body,
+    Map<String, dynamic>? body,
     bool fakeIsolate = false,
   }) {
     return _send(
@@ -196,7 +194,7 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, Object>? body,
+    Map<String, dynamic>? body,
     bool fakeIsolate = false,
   }) {
     return _send(
@@ -216,7 +214,7 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, Object>? body,
+    Map<String, dynamic>? body,
     bool fakeIsolate = false,
   }) {
     query ??= <String, String>{};
@@ -233,42 +231,37 @@ class IsolatedHttpClient implements HttpClient {
     required RequestBundle bundle,
     bool fakeIsolate = false,
   }) {
-    final execution = fakeIsolate
-        ? Executor()
-            .fakeExecute(arg1: bundle, arg2: timeout, arg3: log, fun3: _request)
-        : Executor()
-            .execute(arg1: bundle, arg2: timeout, arg3: log, fun3: _request);
-
-    return execution.next(onValue: (value) {
+    return Executor()
+        .execute(
+      arg1: bundle,
+      arg2: timeout,
+      arg3: log,
+      fun3: _request,
+      fake: fakeIsolate,
+    )
+        .next(onValue: (value) {
       return _checkedResponse(value, bundle);
     });
   }
 
-  static Future<Response> _request(
-      RequestBundle bundle, Duration timeout, bool log) async {
+  static Future<Response> _request(RequestBundle bundle, Duration timeout, bool log) async {
     try {
       final request = await bundle.toRequest();
 
       if (log) {
         if (request is http.Request) {
-          final bodyLine =
-              request.body.isEmpty ? '' : ',\nbody: ${request.body}';
-          print(
-              'url: [${request.method}] ${request.url},\nheaders: ${request.headers}$bodyLine');
+          final bodyLine = request.body.isEmpty ? '' : ',\nbody: ${request.body}';
+          print('url: [${request.method}] ${request.url},\nheaders: ${request.headers}$bodyLine');
         } else {
-          print(
-              'url: [${request.method}] ${request.url},\nheaders: ${request.headers},\nbody: <unknown>');
+          print('url: [${request.method}] ${request.url},\nheaders: ${request.headers},\nbody: <unknown>');
         }
       }
 
       final httpResponse = await request.send().timeout(timeout);
       final bodyString = await httpResponse.stream.bytesToString();
-      final body = bodyString.isNotEmpty
-          ? jsonDecode(bodyString) as dynamic
-          : <String, dynamic>{};
+      final body = bodyString.isNotEmpty ? jsonDecode(bodyString) as dynamic : <String, dynamic>{};
 
-      final isolatedResponse =
-          Response(body, httpResponse.statusCode, httpResponse.headers);
+      final isolatedResponse = Response(body, httpResponse.statusCode, httpResponse.headers);
       if (log) {
         print(isolatedResponse);
       }
