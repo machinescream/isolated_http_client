@@ -7,8 +7,7 @@ class HttpClientException implements Exception {
   HttpClientException(this.message, this.requestBundle);
 
   @override
-  String toString() =>
-      "HttpClientException: ${(message ?? '').toString()}\n Request: ${requestBundle.toString()}";
+  String toString() => "HttpClientException: ${(message ?? '').toString()}\n Request: ${requestBundle.toString()}";
 }
 
 class HttpUnauthorizedException implements Exception {
@@ -16,6 +15,7 @@ class HttpUnauthorizedException implements Exception {
   final RequestBundle? requestBundle;
 
   HttpUnauthorizedException(this.message, this.requestBundle);
+
   @override
   String toString() =>
       "HttpUnauthorizedException: ${(message ?? '').toString()}\n Request: ${requestBundle?.toString()}";
@@ -26,9 +26,9 @@ class HttpServerException implements Exception {
   final RequestBundle? requestBundle;
 
   HttpServerException(this.message, this.requestBundle);
+
   @override
-  String toString() =>
-      "HttpServerException: ${(message ?? '').toString()}\n Request: ${requestBundle.toString()}";
+  String toString() => "HttpServerException: ${(message ?? '').toString()}\n Request: ${requestBundle.toString()}";
 }
 
 class HttpUnknownException implements Exception {
@@ -36,7 +36,7 @@ class HttpUnknownException implements Exception {
   final RequestBundle? requestBundle;
 
   HttpUnknownException(this.message, this.requestBundle);
+
   @override
-  String toString() =>
-      "HttpUnknownException: ${(message ?? '').toString()}\n Request: ${requestBundle.toString()}";
+  String toString() => "HttpUnknownException: ${(message ?? '').toString()}\n Request: ${requestBundle.toString()}";
 }

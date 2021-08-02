@@ -35,7 +35,7 @@ abstract class HttpClient {
     String path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    Map<String, Object>? body,
     bool fakeIsolate = false,
   });
 
@@ -44,7 +44,7 @@ abstract class HttpClient {
     String path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    Map<String, Object>? body,
     bool fakeIsolate = false,
   });
 
@@ -53,7 +53,7 @@ abstract class HttpClient {
     String path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    Map<String, Object>? body,
     bool fakeIsolate = false,
   });
 
@@ -62,7 +62,7 @@ abstract class HttpClient {
     String path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    Map<String, Object>? body,
     bool fakeIsolate = false,
   });
 
@@ -136,7 +136,7 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    Map<String, Object>? body,
     bool fakeIsolate = false,
   }) {
     return _send(
@@ -156,7 +156,7 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    Map<String, Object>? body,
     bool fakeIsolate = false,
   }) {
     return _send(
@@ -176,7 +176,7 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    Map<String, Object>? body,
     bool fakeIsolate = false,
   }) {
     return _send(
@@ -196,7 +196,7 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    Map<String, Object>? body,
     bool fakeIsolate = false,
   }) {
     return _send(
@@ -216,12 +216,12 @@ class IsolatedHttpClient implements HttpClient {
     String path = '',
     Map<String, String>? query,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    Map<String, Object>? body,
     bool fakeIsolate = false,
   }) {
     query ??= <String, String>{};
     headers ??= <String, String>{};
-    body ??= <String, dynamic>{};
+    body ??= <String, Object>{};
     final queryString = makeQuery(query);
     final fullPath = '$host$path$queryString';
     final bundle = RequestBundleWithBody(method, fullPath, query, headers, body: body);

@@ -2,12 +2,6 @@ import 'response.dart';
 
 String bearer(String token) => 'bearer $token';
 
-extension Log on Response {
-  String log() {
-    return 'headers: $headers\nstatusCode: $statusCode\nbody: $body';
-  }
-}
-
 String makeQuery(Map<String, String> queryParameters) {
   if (queryParameters.isEmpty) {
     return '';

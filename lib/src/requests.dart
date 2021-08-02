@@ -21,7 +21,7 @@ abstract class RequestBundle {
 }
 
 class RequestBundleWithBody extends RequestBundle {
-  final dynamic body;
+  final Object body;
   RequestBundleWithBody(String method, String url, Map<String, String> query,
       Map<String, String> headers,
       {required this.body})
@@ -35,8 +35,8 @@ class RequestBundleWithBody extends RequestBundle {
   @override
   http.Request toRequest() {
     final request = http.Request(method, Uri.parse(url));
-    final encodedBody = (body.isEmpty) ? null : jsonEncode(body);
-    if (encodedBody != null) request.body = encodedBody;
+    final encodedBody = jsonEncode(body);
+    request.body = encodedBody;
     request.headers.addAll(headers);
     return request;
   }
