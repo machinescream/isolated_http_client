@@ -1,9 +1,14 @@
+import 'dart:typed_data';
+
 class Response {
   final Object _body;
+
+  /// The bytes comprising the body of this response.
+  final Uint8List bodyBytes;
   final Map<String, String> headers;
   final int statusCode;
 
-  Response(this._body, this.statusCode, this.headers);
+  Response(this._body, this.bodyBytes, this.statusCode, this.headers);
 
   Map<String, dynamic> get body =>
       _body is Map<String, dynamic> ? _body as Map<String, dynamic> : throw ArgumentError("body: $_body is not Map");
