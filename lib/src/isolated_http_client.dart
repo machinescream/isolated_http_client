@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:isolated_http_client/isolated_http_client.dart';
@@ -261,14 +260,8 @@ class IsolatedHttpClient implements HttpClient {
 
       final streamedResponse = await request.send().timeout(timeout);
       final httpResponse = await http.Response.fromStream(streamedResponse);
-      var body = <String, dynamic>{};
-      try {
-        body = jsonDecode(httpResponse.body) as dynamic;
-      } catch (e) {
-        print("body is not valid JSON text");
-      }
-
-      final isolatedResponse = Response(body, httpResponse.bodyBytes, httpResponse.statusCode, httpResponse.headers);
+      final isolatedResponse =
+          Response(httpResponse.bodyBytes, httpResponse.body, httpResponse.statusCode, httpResponse.headers);
       if (log) {
         print(isolatedResponse);
       }
