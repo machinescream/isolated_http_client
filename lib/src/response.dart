@@ -1,18 +1,25 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-class Response {
-  final Uint8List _bodyBytes;
-  final String _body;
-  final Map<String, String> headers;
-  final int statusCode;
+import 'package:http/http.dart' as http;
 
-  Response(this._bodyBytes, this._body, this.statusCode, this.headers);
+class Response {
+  final http.Response _response;
+
+  Response(this._response);
+
+  static Future<Response> fromStream(http.StreamedResponse response) async {
+    return Response(await http.Response.fromStream(response));
+  }
+
+  Map<String, String> get headers => _response.headers;
+
+  int get statusCode => _response.statusCode;
 
   dynamic get _jsonBody {
     try {
-      return jsonDecode(_body);
-    } on FormatException catch (e) {
+      return jsonDecode(_response.body);
+    } on FormatException {
       return <String, dynamic>{};
     }
   }
@@ -26,7 +33,7 @@ class Response {
       : throw ArgumentError("body: $_jsonBody is not "
           "List");
 
-  Uint8List get bodyAsBytes => _bodyBytes;
+  Uint8List get bodyAsBytes => _response.bodyBytes;
 
   @override
   String toString() {

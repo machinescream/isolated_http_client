@@ -259,9 +259,7 @@ class IsolatedHttpClient implements HttpClient {
       }
 
       final streamedResponse = await request.send().timeout(timeout);
-      final httpResponse = await http.Response.fromStream(streamedResponse);
-      final isolatedResponse =
-          Response(httpResponse.bodyBytes, httpResponse.body, httpResponse.statusCode, httpResponse.headers);
+      final isolatedResponse = await Response.fromStream(streamedResponse);
       if (log) {
         print(isolatedResponse);
       }
