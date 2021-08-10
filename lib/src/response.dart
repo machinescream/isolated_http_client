@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class Response {
   final Object _body;
   final Map<String, String> headers;
@@ -12,6 +14,11 @@ class Response {
       ? _body as List<dynamic>
       : throw ArgumentError("body: $_body is not "
           "List");
+
+  Uint8List get bodyAsBytes => _body is Uint8List
+      ? _body as Uint8List
+      : throw ArgumentError("body: $_body is not "
+          "Uint8List");
 
   @override
   String toString() {

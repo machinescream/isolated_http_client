@@ -257,9 +257,18 @@ class IsolatedHttpClient implements HttpClient {
         }
       }
 
-      final httpResponse = await request.send().timeout(timeout);
-      final bodyString = await httpResponse.stream.bytesToString();
-      final body = bodyString.isNotEmpty ? jsonDecode(bodyString) as dynamic : <String, dynamic>{};
+      final streamedResponse = await request.send().timeout(timeout);
+      final httpResponse = await http.Response.fromStream(streamedResponse);
+      Object body;
+      if (httpResponse.body.isNotEmpty) {
+        try {
+          body = jsonDecode(httpResponse.body) as dynamic;
+        } on FormatException {
+          body = httpResponse.bodyBytes;
+        }
+      } else {
+        body = <String, dynamic>{};
+      }
 
       final isolatedResponse = Response(body, httpResponse.statusCode, httpResponse.headers);
       if (log) {
