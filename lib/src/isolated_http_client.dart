@@ -1,14 +1,13 @@
 import 'dart:async';
-
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:isolated_http_client/isolated_http_client.dart';
 import 'package:isolated_http_client/src/utils.dart';
 import 'package:worker_manager/worker_manager.dart';
-
 import 'exceptions.dart';
 import 'http_method.dart';
-import 'requests.dart';
 import 'response.dart';
+import 'requests.dart';
 
 abstract class HttpClient {
   factory HttpClient({Duration timeout = const Duration(seconds: 10), bool log = false}) =>
@@ -259,7 +258,19 @@ class IsolatedHttpClient implements HttpClient {
       }
 
       final streamedResponse = await request.send().timeout(timeout);
-      final isolatedResponse = await Response.fromStream(streamedResponse);
+      final httpResponse = await http.Response.fromStream(streamedResponse);
+      Object body;
+      if (httpResponse.body.isNotEmpty) {
+        try {
+          body = jsonDecode(httpResponse.body) as dynamic;
+        } on FormatException {
+          body = httpResponse.bodyBytes;
+        }
+      } else {
+        body = <String, dynamic>{};
+      }
+
+      final isolatedResponse = Response(body, httpResponse.statusCode, httpResponse.headers);
       if (log) {
         print(isolatedResponse);
       }

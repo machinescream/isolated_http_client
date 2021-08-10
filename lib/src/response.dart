@@ -1,46 +1,31 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:http/http.dart' as http;
-
 class Response {
-  final http.Response _response;
+  final Object _body;
+  final Map<String, String> headers;
+  final int statusCode;
 
-  Response(this._response);
+  Response(this._body, this.statusCode, this.headers);
 
-  static Future<Response> fromStream(http.StreamedResponse response) async {
-    return Response(await http.Response.fromStream(response));
-  }
+  Map<String, dynamic> get body =>
+      _body is Map<String, dynamic> ? _body as Map<String, dynamic> : throw ArgumentError("body: $_body is not Map");
 
-  Map<String, String> get headers => _response.headers;
-
-  int get statusCode => _response.statusCode;
-
-  dynamic get _jsonBody {
-    try {
-      return jsonDecode(_response.body);
-    } on FormatException {
-      return <String, dynamic>{};
-    }
-  }
-
-  Map<String, dynamic> get body => _jsonBody is Map<String, dynamic>
-      ? _jsonBody as Map<String, dynamic>
-      : throw ArgumentError("body: $_jsonBody is not Map");
-
-  List<dynamic> get bodyAsList => _jsonBody is List
-      ? _jsonBody as List<dynamic>
-      : throw ArgumentError("body: $_jsonBody is not "
+  List<dynamic> get bodyAsList => _body is List
+      ? _body as List<dynamic>
+      : throw ArgumentError("body: $_body is not "
           "List");
 
-  Uint8List get bodyAsBytes => _response.bodyBytes;
+  Uint8List get bodyAsBytes => _body is Uint8List
+      ? _body as Uint8List
+      : throw ArgumentError("body: $_body is not "
+          "Uint8List");
 
   @override
   String toString() {
-    return 'statusCode : $statusCode\nheaders: $headers\nbody: $_jsonBody';
+    return 'statusCode : $statusCode\nheaders: $headers\n body: $_body';
   }
 
   String log() {
-    return 'headers: $headers\nstatusCode: $statusCode\nbody: $_jsonBody';
+    return 'headers: $headers\nstatusCode: $statusCode\nbody: $_body';
   }
 }
