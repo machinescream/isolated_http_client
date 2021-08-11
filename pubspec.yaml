@@ -1,6 +1,6 @@
 name: isolated_http_client
 description: http clint with requests cancelation and isolate decoding in separated isolate
-version: 1.5.3
+version: 1.5.4
 homepage: https://github.com/Renesanse/isolated_http_client
 
 environment:
