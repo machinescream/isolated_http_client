@@ -1,5 +1,3 @@
-import 'response.dart';
-
 String bearer(String token) => 'bearer $token';
 
 String makeQuery(Map<String, String> queryParameters) {

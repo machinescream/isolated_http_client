@@ -253,7 +253,8 @@ class IsolatedHttpClient implements HttpClient {
           final bodyLine = request.body.isEmpty ? '' : ',\nbody: ${request.body}';
           print('url: [${request.method}] ${request.url},\nheaders: ${request.headers}$bodyLine');
         } else {
-          print('url: [${request.method}] ${request.url},\nheaders: ${request.headers},\nbody: <unknown>');
+          print(
+              'url: [${request.method}] ${request.url},\nheaders: ${request.headers},\nbody: <unknown>');
         }
       }
 

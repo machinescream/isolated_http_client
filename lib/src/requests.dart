@@ -22,8 +22,9 @@ abstract class RequestBundle {
 
 class RequestBundleWithBody extends RequestBundle {
   final Object body;
-  RequestBundleWithBody(String method, String url, Map<String, String> query,
-      Map<String, String> headers,
+
+  RequestBundleWithBody(
+      String method, String url, Map<String, String> query, Map<String, String> headers,
       {required this.body})
       : super(method, url, query, headers);
 
@@ -35,8 +36,10 @@ class RequestBundleWithBody extends RequestBundle {
   @override
   http.Request toRequest() {
     final request = http.Request(method, Uri.parse(url));
-    final encodedBody = jsonEncode(body);
-    request.body = encodedBody;
+    if (method != "GET") {
+      final encodedBody = jsonEncode(body);
+      request.body = encodedBody;
+    }
     request.headers.addAll(headers);
     return request;
   }
@@ -46,8 +49,8 @@ class MultipartRequestBundle extends RequestBundle {
   final List<MultipartBundleFile> files;
   final Map<String, String> fields;
 
-  MultipartRequestBundle(String method, String url, Map<String, String> query,
-      Map<String, String> headers,
+  MultipartRequestBundle(
+      String method, String url, Map<String, String> query, Map<String, String> headers,
       {this.files = const [], this.fields = const {}})
       : super(method, url, query, headers);
 
@@ -85,8 +88,7 @@ class _MultipartPathFile extends MultipartBundleFile {
   final String? filename;
   final MediaType? contentType;
 
-  _MultipartPathFile(this.field, this.filePath,
-      {this.filename, this.contentType});
+  _MultipartPathFile(this.field, this.filePath, {this.filename, this.contentType});
 
   @override
   Future<http.MultipartFile> toMultipartFile() async {
@@ -105,8 +107,7 @@ class _MultipartBytesFile extends MultipartBundleFile {
   final String? filename;
   final MediaType? contentType;
 
-  _MultipartBytesFile(this.field, this.value,
-      {this.filename, this.contentType});
+  _MultipartBytesFile(this.field, this.value, {this.filename, this.contentType});
 
   @override
   Future<http.MultipartFile> toMultipartFile() async {
@@ -125,8 +126,7 @@ class _MultipartStringFile extends MultipartBundleFile {
   final String? filename;
   final MediaType? contentType;
 
-  _MultipartStringFile(this.field, this.value,
-      {this.filename, this.contentType});
+  _MultipartStringFile(this.field, this.value, {this.filename, this.contentType});
 
   @override
   Future<http.MultipartFile> toMultipartFile() async {
