@@ -1,17 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
+import 'package:cross_file/cross_file.dart';
 import 'package:http/http.dart' as http;
 import 'package:isolated_http_client/isolated_http_client.dart';
-import 'package:isolated_http_client/src/utils.dart';
-import 'package:worker_manager/worker_manager.dart';
-import 'exceptions.dart';
-import 'http_method.dart';
-import 'response.dart';
-import 'requests.dart';
 
 abstract class HttpClient {
   factory HttpClient({Duration timeout = const Duration(seconds: 10), bool log = false}) =>
       IsolatedHttpClient(timeout, log);
+
+  Future<void> tusUpload({
+    required String url,
+    required XFile file,
+    required Map<String, dynamic>? requestBody,
+    Map<String, String>? headers,
+    void Function(double progress)? onProgress,
+    void Function()? onComplete,
+  });
 
   Cancelable<Response> get({
     required String host,
@@ -74,6 +80,7 @@ abstract class HttpClient {
 class IsolatedHttpClient implements HttpClient {
   final Duration timeout;
   final bool log;
+  final _supportClient = http.Client();
 
   IsolatedHttpClient(this.timeout, this.log);
 
@@ -244,7 +251,8 @@ class IsolatedHttpClient implements HttpClient {
     });
   }
 
-  static Future<Response> _request(RequestBundle bundle, Duration timeout, bool log) async {
+  static Future<Response> _request(
+      RequestBundle bundle, Duration timeout, bool log, TypeSendPort sendPort) async {
     try {
       final request = await bundle.toRequest();
 
@@ -279,5 +287,82 @@ class IsolatedHttpClient implements HttpClient {
     } catch (e) {
       rethrow;
     }
+  }
+
+  @override
+  Future<void> tusUpload({
+    required String url,
+    required XFile file,
+    required Map<String, dynamic>? requestBody,
+    Map<String, String>? headers,
+    void Function(double progress)? onProgress,
+    void Function()? onComplete,
+  }) async {
+    final maxChunkSize = 512 * 1024;
+    var offset = await _getOffset(headers, url);
+    final int totalBytes = await file.length();
+
+    Future<Uint8List> _getData() async {
+      int start = offset;
+      int end = offset + maxChunkSize;
+      end = end > totalBytes ? totalBytes : end;
+
+      final result = BytesBuilder();
+      await for (final chunk in file.openRead(start, end)) {
+        result.add(chunk);
+      }
+
+      final bytesRead = min(maxChunkSize, result.length);
+      offset = offset + bytesRead;
+
+      return result.takeBytes();
+    }
+
+    while (offset < totalBytes) {
+      final uploadHeaders = (headers ?? {})
+        ..addAll({
+          "Tus-Resumable": "1.0.0",
+          "Upload-Offset": "$offset",
+          "Content-Type": "application/offset+octet-stream"
+        });
+
+      await _supportClient.patch(
+        url as Uri,
+        headers: uploadHeaders,
+        body: await _getData(),
+      );
+
+      if (onProgress != null) {
+        onProgress(offset / totalBytes * 100);
+      }
+
+      if (offset == totalBytes) {
+        onComplete?.call();
+      }
+    }
+  }
+
+  Future<int> _getOffset(Map<String, String>? headers, String uploadUrl) async {
+    final offsetHeaders = (headers ?? {})..addAll({"Tus-Resumable": "1.0.0"});
+    final response = await head(host: uploadUrl, headers: offsetHeaders);
+    _checkedResponse(
+        response, RequestBundleWithBody('head', uploadUrl, {}, offsetHeaders, body: ""));
+
+    int? serverOffset = _parseOffset(response.headers["upload-offset"]);
+    if (serverOffset == null) {
+      throw HttpServerException(
+          {"message": "missing upload offset in response for resuming upload"}, null);
+    }
+    return serverOffset;
+  }
+
+  int? _parseOffset(String? offset) {
+    if (offset == null || offset.isEmpty) {
+      return null;
+    }
+    if (offset.contains(",")) {
+      offset = offset.substring(0, offset.indexOf(","));
+    }
+    return int.tryParse(offset);
   }
 }
