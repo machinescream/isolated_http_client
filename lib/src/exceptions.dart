@@ -1,4 +1,20 @@
-import 'requests.dart';
+import 'package:isolated_http_client/src/requests.dart';
+import 'package:isolated_http_client/src/response.dart';
+
+Response checkedResponse(Response response, RequestBundle requestBundle) {
+  final statusCode = response.statusCode;
+  if (statusCode >= 200 && statusCode < 300) return response;
+  if (statusCode == 401) {
+    throw HttpUnauthorizedException(response.body, requestBundle);
+  }
+  if (statusCode >= 400 && statusCode < 500) {
+    throw HttpClientException(response.body, requestBundle);
+  }
+  if (statusCode >= 500 && statusCode < 600) {
+    throw HttpServerException(response.body, requestBundle);
+  }
+  throw HttpUnknownException(response.body, requestBundle);
+}
 
 class HttpClientException implements Exception {
   final Map<String, dynamic>? message;
@@ -7,7 +23,7 @@ class HttpClientException implements Exception {
   HttpClientException(this.message, this.requestBundle);
 
   @override
-  String toString() => "HttpClientException: ${(message ?? '').toString()}\n Request: ${requestBundle.toString()}";
+  String toString() => 'HttpClientException: $message\n Request: $requestBundle';
 }
 
 class HttpUnauthorizedException implements Exception {
@@ -17,8 +33,7 @@ class HttpUnauthorizedException implements Exception {
   HttpUnauthorizedException(this.message, this.requestBundle);
 
   @override
-  String toString() =>
-      "HttpUnauthorizedException: ${(message ?? '').toString()}\n Request: ${requestBundle?.toString()}";
+  String toString() => 'HttpUnauthorizedException: $message\n Request: $requestBundle';
 }
 
 class HttpServerException implements Exception {
@@ -28,7 +43,7 @@ class HttpServerException implements Exception {
   HttpServerException(this.message, this.requestBundle);
 
   @override
-  String toString() => "HttpServerException: ${(message ?? '').toString()}\n Request: ${requestBundle.toString()}";
+  String toString() => 'HttpServerException: $message\n Request: $requestBundle';
 }
 
 class HttpUnknownException implements Exception {
@@ -38,5 +53,5 @@ class HttpUnknownException implements Exception {
   HttpUnknownException(this.message, this.requestBundle);
 
   @override
-  String toString() => "HttpUnknownException: ${(message ?? '').toString()}\n Request: ${requestBundle.toString()}";
+  String toString() => 'HttpUnknownException: $message\n Request: $requestBundle';
 }

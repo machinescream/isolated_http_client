@@ -1,9 +1,6 @@
 String bearer(String token) => 'bearer $token';
 
 String makeQuery(Map<String, String> queryParameters) {
-  if (queryParameters.isEmpty) {
-    return '';
-  }
   final result = StringBuffer('?');
   var separator = '';
   void writeParameter(String key, String value) {
@@ -15,7 +12,6 @@ String makeQuery(Map<String, String> queryParameters) {
       result.write(value);
     }
   }
-
   queryParameters.forEach((key, value) {
     writeParameter(key, value);
   });

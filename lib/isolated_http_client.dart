@@ -14,14 +14,18 @@ export 'src/utils.dart';
 
 Future<void> main() async {
   await Executor().warmUp();
-  final c = IsolatedHttpClient(Duration(seconds: 3), false);
-  await c.get(host: "https://restcountries.eu/rest/v2/all").next(onValue: (body){
-    print(body.bodyAsList);
-  });
+  final c = IsolatedHttpClient(const Duration(seconds: 3), log: false);
+  await c.get(host: "https://restcountries.eu/rest/v2/all").next(
+    onValue: (body) {
+      print(body.bodyAsList);
+    },
+  );
 
-  await c.get(host: "https://countriesnow.space/api/v0.1/countries/population/cities").next(onValue: (body){
-    print(body.body);
-  });
+  await c.get(host: "https://countriesnow.space/api/v0.1/countries/population/cities").next(
+    onValue: (body) {
+      print(body.body);
+    },
+  );
   print('finish');
   exit(0);
 }

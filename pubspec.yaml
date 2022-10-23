@@ -7,7 +7,11 @@ environment:
   sdk: '>=2.12.0 <3.0.0'
 
 dependencies:
-  http: ^0.13.4
-  http_parser: ^4.0.1
+  cross_file: ^0.3.3+2
+  http: ^0.13.5
+  http_parser: ^4.0.2
   worker_manager: ^4.4.6
-  cross_file: ^0.3.3+1
+  shared_preferences: ^2.0.15
+
+dev_dependencies:
+  lint: ^1.10.0
