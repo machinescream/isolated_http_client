@@ -252,10 +252,9 @@ class IsolatedHttpClient implements HttpClient {
             return Cancelable.fromFuture(_refresh!.future)
                 .thenNext((value) => request(bundle: bundle, fakeIsolate: fakeIsolate));
           } else {
-            ??
-            //await refresh
+            // await refresh
             // null refresh
-            //continue
+            // continue
           }
         }
         final body = value.body;
