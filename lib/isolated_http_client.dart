@@ -17,12 +17,5 @@ export 'src/utils.dart';
 Future<void> main() async {
   await Executor().warmUp();
   final c = HttpClientIsolated();
-  final file = File('/Users/danielsurnin/3.mp4');
-  final r = await c.filePost(
-    host: 'http://5.101.179.150:4000',
-    path: 'content',
-    file: await MultipartFile.fromPath('file', file.path),
-  );
-  print(r);
   exit(0);
 }
