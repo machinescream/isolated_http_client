@@ -8,81 +8,89 @@ import 'package:isolated_http_client/src/tokens_storage.dart';
 abstract class HttpClient {
   Future<void> init();
 
-  // Future<void> tusUpload({
-  //   required String url,
-  //   required XFile file,
-  //   required Map<String, dynamic>? requestBody,
-  //   Map<String, String>? headers,
-  //   void Function(double progress)? onProgress,
-  //   void Function()? onComplete,
-  // });
+  Future<void> clearTokens();
+
+  bool get fakeIsolate;
+
+  bool get authorized;
 
   Cancelable<Response> get({
     required String host,
-    String path,
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    bool fakeIsolate = false,
   });
 
   Cancelable<Response> head({
     required String host,
-    String path,
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    bool fakeIsolate = false,
   });
 
   Cancelable<Response> post({
     required String host,
-    String path,
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
-    bool fakeIsolate = false,
   });
 
   Cancelable<Response> put({
     required String host,
-    String path,
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
-    bool fakeIsolate = false,
   });
 
   Cancelable<Response> delete({
     required String host,
-    String path,
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
-    bool fakeIsolate = false,
   });
 
   Cancelable<Response> patch({
     required String host,
-    String path,
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
-    bool fakeIsolate = false,
   });
 
-  Cancelable<Response> request({
-    required RequestBundle bundle,
-    bool fakeIsolate = false,
+  Cancelable<Response> filePost({
+    required String host,
+    String? path,
+    Map<String, String>? query,
+    Map<String, String>? headers,
+    required http.MultipartFile file,
   });
 }
 
-class IsolatedHttpClient implements HttpClient {
+class HttpClientIsolated implements HttpClient {
   final Duration timeout;
   final bool log;
-  final _tokenStorage = TokensStorage();
+  final TokensStorage _tokenStorage;
+  final Future<Response> Function()? onRefresh;
 
-  // final _supportClient = http.Client();
+  @override
+  final bool fakeIsolate;
 
-  IsolatedHttpClient(this.timeout, {this.log = false});
+  HttpClientIsolated({
+    this.log = false,
+    this.fakeIsolate = false,
+    this.timeout = const Duration(minutes: 10),
+    this.onRefresh,
+  }) : _tokenStorage = TokensStorage();
+
+  HttpClientIsolated.test({
+    this.log = false,
+    this.fakeIsolate = false,
+    this.timeout = const Duration(minutes: 10),
+    this.onRefresh,
+  }) : _tokenStorage = TokensStorage.test();
 
   @override
   Future<void> init() => _tokenStorage.init();
@@ -90,10 +98,9 @@ class IsolatedHttpClient implements HttpClient {
   @override
   Cancelable<Response> get({
     required String host,
-    String path = '',
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    bool fakeIsolate = false,
   }) =>
       _send(
         method: HttpMethod.get,
@@ -101,16 +108,14 @@ class IsolatedHttpClient implements HttpClient {
         path: path,
         query: query,
         headers: headers,
-        fakeIsolate: fakeIsolate,
       );
 
   @override
   Cancelable<Response> head({
     required String host,
-    String path = '',
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
-    bool fakeIsolate = false,
   }) =>
       _send(
         method: HttpMethod.head,
@@ -118,17 +123,15 @@ class IsolatedHttpClient implements HttpClient {
         path: path,
         query: query,
         headers: headers,
-        fakeIsolate: fakeIsolate,
       );
 
   @override
   Cancelable<Response> post({
     required String host,
-    String path = '',
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
-    bool fakeIsolate = false,
   }) =>
       _send(
         method: HttpMethod.post,
@@ -137,17 +140,15 @@ class IsolatedHttpClient implements HttpClient {
         query: query,
         headers: headers,
         body: body,
-        fakeIsolate: fakeIsolate,
       );
 
   @override
   Cancelable<Response> put({
     required String host,
-    String path = '',
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
-    bool fakeIsolate = false,
   }) =>
       _send(
         method: HttpMethod.put,
@@ -156,17 +157,15 @@ class IsolatedHttpClient implements HttpClient {
         query: query,
         headers: headers,
         body: body,
-        fakeIsolate: fakeIsolate,
       );
 
   @override
   Cancelable<Response> delete({
     required String host,
-    String path = '',
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
-    bool fakeIsolate = false,
   }) =>
       _send(
         method: HttpMethod.delete,
@@ -175,17 +174,15 @@ class IsolatedHttpClient implements HttpClient {
         query: query,
         headers: headers,
         body: body,
-        fakeIsolate: fakeIsolate,
       );
 
   @override
   Cancelable<Response> patch({
     required String host,
-    String path = '',
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
-    bool fakeIsolate = false,
   }) =>
       _send(
         method: HttpMethod.patch,
@@ -194,7 +191,22 @@ class IsolatedHttpClient implements HttpClient {
         query: query,
         headers: headers,
         body: body,
-        fakeIsolate: fakeIsolate,
+      );
+  @override
+  Cancelable<Response> filePost({
+    required String host,
+    String? path,
+    Map<String, String>? query,
+    Map<String, String>? headers,
+    required http.MultipartFile file,
+  }) =>
+      _send(
+        method: HttpMethod.post,
+        host: host,
+        path: path,
+        query: query,
+        headers: headers,
+        file: file,
       );
 
   Map<String, String> get additionalHeaders {
@@ -205,67 +217,77 @@ class IsolatedHttpClient implements HttpClient {
     };
   }
 
-  Completer<void>? _refresh;
+  Future<Response>? _refresh;
 
   Cancelable<Response> _send({
     required String method,
     required String host,
-    String path = '',
+    String? path,
     Map<String, String>? query,
     Map<String, String>? headers,
     Map<String, dynamic>? body,
-    bool fakeIsolate = false,
+    http.MultipartFile? file,
   }) {
     Cancelable<Response> constructRequest() {
-      final queryString = query != null ? makeQuery(query) : '';
-      final fullPath = '$host$path$queryString';
-      headers?.addAll(additionalHeaders);
-      final bundle = RequestBundleWithBody(method, fullPath, query, headers, body: body);
-      return request(bundle: bundle, fakeIsolate: fakeIsolate);
+      final queryString = query != null ? makeQuery(query) : "";
+      final pathChecked = path ?? "";
+      final fullPath = '$host$pathChecked$queryString';
+      final allHeaders = additionalHeaders..addAll(headers ?? {});
+      late RequestBundle bundle;
+      if (file != null) {
+        bundle = MultipartPathFile(method, fullPath, query, allHeaders, file: file);
+      } else {
+        bundle = RequestBundleWithBody(method, fullPath, query, allHeaders, body: body);
+      }
+      return request(bundle: bundle);
     }
 
     if (_refresh != null) {
-      return Cancelable<void>.fromFuture(_refresh!.future).thenNext((value) {
+      return Cancelable<void>.fromFuture(_refresh!).thenNext((value) {
         return constructRequest();
       });
     }
     return constructRequest();
   }
 
-  @override
-  Cancelable<Response> request({
-    required RequestBundle bundle,
-    bool fakeIsolate = false,
-  }) {
-    return Executor()
-        .execute(
-      arg1: bundle,
-      arg2: timeout,
-      arg3: log,
-      fun3: _request,
-      fake: fakeIsolate,
-    )
-        .thenNext(
-      (value) async {
-        if (value.statusCode == HttpStatus.unauthorized) {
-          if (_refresh != null) {
-            return Cancelable.fromFuture(_refresh!.future)
-                .thenNext((value) => request(bundle: bundle, fakeIsolate: fakeIsolate));
-          } else {
-            // await refresh
-            // null refresh
-            // continue
-          }
-        }
-        final body = value.body;
-        _tokenStorage.save(
-          body[TokensStorageKeys.token] as String?,
-          body[TokensStorageKeys.refreshToken] as String?,
-        );
-        return checkedResponse(value, bundle);
-      },
-    );
+  void _rememberTokens(Response response){
+    if(response.bodySource != null && response.statusCode == HttpStatus.ok){
+      final body = response.body;
+      _tokenStorage.save(
+        body[TokensStorageKeys.token] as String?,
+        body[TokensStorageKeys.refreshToken] as String?,
+      );
+    }
   }
+
+  Cancelable<Response> request({required RequestBundle bundle}) => Executor()
+          .execute(
+        arg1: bundle,
+        arg2: timeout,
+        arg3: log,
+        fun3: _request,
+        fake: fakeIsolate,
+      )
+          .thenNext(
+        (value) async {
+          if (value.statusCode == HttpStatus.unauthorized) {
+            if (onRefresh != null && _refresh == null) {
+              _refresh = onRefresh!.call();
+            }
+            if (_refresh != null) {
+              return Cancelable.fromFuture(_refresh!).thenNext(
+                (value) {
+                  _rememberTokens(value);
+                  _refresh = null;
+                  return request(bundle: bundle);
+                },
+              );
+            }
+          }
+          _rememberTokens(value);
+          return checkedResponse(value, bundle);
+        },
+      );
 
   static Future<Response> _request(
     RequestBundle bundle,
@@ -274,19 +296,11 @@ class IsolatedHttpClient implements HttpClient {
     TypeSendPort sendPort,
   ) async {
     try {
+      if (log) {
+        print('Request:');
+        print(bundle);
+      }
       final request = await bundle.toRequest();
-      //TODO:...
-      // if (log) {
-      //   print('Request:');
-      //   if (request is http.Request) {
-      //     final bodyLine = request.body.isEmpty ? '' : ',\nbody: ${request.body}';
-      //     print('url: [${request.method}] ${request.url},\nheaders: ${request.headers}$bodyLine');
-      //   } else {
-      //     print(
-      //         'url: [${request.method}] ${request.url},\nheaders: ${request.headers},\nbody: <unknown>');
-      //   }
-      // }
-
       final streamedResponse = await request.send().timeout(timeout);
       final httpResponse = await http.Response.fromStream(streamedResponse);
       dynamic body;
@@ -297,7 +311,6 @@ class IsolatedHttpClient implements HttpClient {
           body = httpResponse.bodyBytes;
         }
       }
-
       final isolatedResponse = Response(body, httpResponse.statusCode, httpResponse.headers);
       if (log) {
         print('Response:');
@@ -309,80 +322,9 @@ class IsolatedHttpClient implements HttpClient {
     }
   }
 
-  // @override
-  // Future<void> tusUpload({
-  //   required String url,
-  //   required XFile file,
-  //   required Map<String, dynamic>? requestBody,
-  //   Map<String, String>? headers,
-  //   void Function(double progress)? onProgress,
-  //   void Function()? onComplete,
-  // }) async {
-  //   final maxChunkSize = 512 * 1024;
-  //   var offset = await _getOffset(headers, url);
-  //   final int totalBytes = await file.length();
-  //
-  //   Future<Uint8List> _getData() async {
-  //     int start = offset;
-  //     int end = offset + maxChunkSize;
-  //     end = end > totalBytes ? totalBytes : end;
-  //
-  //     final result = BytesBuilder();
-  //     await for (final chunk in file.openRead(start, end)) {
-  //       result.add(chunk);
-  //     }
-  //
-  //     final bytesRead = min(maxChunkSize, result.length);
-  //     offset = offset + bytesRead;
-  //
-  //     return result.takeBytes();
-  //   }
-  //
-  //   while (offset < totalBytes) {
-  //     final uploadHeaders = (headers ?? {})
-  //       ..addAll({
-  //         "Tus-Resumable": "1.0.0",
-  //         "Upload-Offset": "$offset",
-  //         "Content-Type": "application/offset+octet-stream"
-  //       });
-  //
-  //     await _supportClient.patch(
-  //       url as Uri,
-  //       headers: uploadHeaders,
-  //       body: await _getData(),
-  //     );
-  //
-  //     if (onProgress != null) {
-  //       onProgress(offset / totalBytes * 100);
-  //     }
-  //
-  //     if (offset == totalBytes) {
-  //       onComplete?.call();
-  //     }
-  //   }
-  // }
+  @override
+  Future<void> clearTokens() => _tokenStorage.clear();
 
-  // Future<int> _getOffset(Map<String, String>? headers, String uploadUrl) async {
-  //   final offsetHeaders = (headers ?? {})..addAll({"Tus-Resumable": "1.0.0"});
-  //   final response = await head(host: uploadUrl, headers: offsetHeaders);
-  //   checkedResponse(
-  //       response, RequestBundleWithBody('head', uploadUrl, {}, offsetHeaders, body: ""));
-  //
-  //   int? serverOffset = _parseOffset(response.headers["upload-offset"]);
-  //   if (serverOffset == null) {
-  //     throw HttpServerException(
-  //         {"message": "missing upload offset in response for resuming upload"}, null);
-  //   }
-  //   return serverOffset;
-  // }
-
-  int? _parseOffset(String? offset) {
-    if (offset == null || offset.isEmpty) {
-      return null;
-    }
-    if (offset.contains(",")) {
-      offset = offset.substring(0, offset.indexOf(","));
-    }
-    return int.tryParse(offset);
-  }
+  @override
+  bool get authorized => _tokenStorage.token != null;
 }

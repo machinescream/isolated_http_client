@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 import 'package:isolated_http_client/src/http_method.dart';
 
 abstract class RequestBundle {
@@ -47,112 +46,19 @@ class RequestBundleWithBody extends RequestBundle {
   }
 }
 
-class MultipartRequestBundle extends RequestBundle {
-  final List<MultipartBundleFile>? files;
-  final Map<String, String>? fields;
+class MultipartPathFile extends RequestBundle {
+  final http.MultipartFile file;
 
-  MultipartRequestBundle(
+  MultipartPathFile(
     String method,
     String url,
     Map<String, String>? query,
     Map<String, String>? headers, {
-    this.files,
-    this.fields,
+    required this.file,
   }) : super(method, url, query, headers);
 
   @override
-  Future<http.BaseRequest> toRequest() async {
-    final request = http.MultipartRequest(method, Uri.parse(url));
-    if (headers != null) {
-      request.headers.addAll(headers!);
-    }
-    if (fields != null) {
-      request.fields.addAll(fields!);
-    }
-    if (files != null) {
-      for (final file in files!) {
-        final multipartFile = await file.toMultipartFile();
-        request.files.add(multipartFile);
-      }
-    }
-    return request;
-  }
-}
-
-abstract class MultipartBundleFile {
-  MultipartBundleFile();
-
-  factory MultipartBundleFile.fromPath(
-    String field,
-    String filePath, {
-    String? filename,
-    MediaType? contentType,
-  }) = _MultipartPathFile;
-
-  factory MultipartBundleFile.fromBytes(
-    String field,
-    List<int> filePath, {
-    String? filename,
-    MediaType? contentType,
-  }) = _MultipartBytesFile;
-
-  factory MultipartBundleFile.fromString(
-    String field,
-    String filePath, {
-    String? filename,
-    MediaType? contentType,
-  }) = _MultipartStringFile;
-
-  FutureOr<http.MultipartFile> toMultipartFile();
-}
-
-class _MultipartPathFile extends MultipartBundleFile {
-  final String field;
-  final String filePath;
-  final String? filename;
-  final MediaType? contentType;
-
-  _MultipartPathFile(this.field, this.filePath, {this.filename, this.contentType});
-
-  @override
-  Future<http.MultipartFile> toMultipartFile() async => http.MultipartFile.fromPath(
-        field,
-        filePath,
-        filename: filename,
-        contentType: contentType,
-      );
-}
-
-class _MultipartBytesFile extends MultipartBundleFile {
-  final String field;
-  final List<int> value;
-  final String? filename;
-  final MediaType? contentType;
-
-  _MultipartBytesFile(this.field, this.value, {this.filename, this.contentType});
-
-  @override
-  Future<http.MultipartFile> toMultipartFile() async => http.MultipartFile.fromBytes(
-        field,
-        value,
-        filename: filename,
-        contentType: contentType,
-      );
-}
-
-class _MultipartStringFile extends MultipartBundleFile {
-  final String field;
-  final String value;
-  final String? filename;
-  final MediaType? contentType;
-
-  _MultipartStringFile(this.field, this.value, {this.filename, this.contentType});
-
-  @override
-  Future<http.MultipartFile> toMultipartFile() async => http.MultipartFile.fromString(
-        field,
-        value,
-        filename: filename,
-        contentType: contentType,
-      );
+  Future<http.MultipartRequest> toRequest() async => http.MultipartRequest(method, Uri.parse(url))
+    ..files.add(file)
+    ..headers.addAll(headers ?? {});
 }
